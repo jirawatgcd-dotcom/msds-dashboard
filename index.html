@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard MSDs รพ.สกลนคร</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Angsana New', 'Sarabun', 'Tahoma', sans-serif; background: #f0f4f8; color: #1a2333; font-size: 16px; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #1F4E79 0%, #2E75B6 100%); color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .header h1 { font-size: 22px; font-weight: bold; }
+  .header p { font-size: 14px; opacity: 0.85; margin-top: 2px; }
+  .header-badge { background: rgba(255,255,255,0.2); border-radius: 20px; padding: 6px 16px; font-size: 13px; text-align: center; }
+
+  /* TABS */
+  .tabs { display: flex; background: #fff; border-bottom: 3px solid #BDD7EE; padding: 0 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .tab { padding: 12px 20px; cursor: pointer; font-size: 15px; color: #555; border-bottom: 3px solid transparent; margin-bottom: -3px; transition: all .2s; white-space: nowrap; }
+  .tab:hover { color: #1F4E79; background: #f0f4f8; }
+  .tab.active { color: #1F4E79; font-weight: bold; border-bottom-color: #1F4E79; }
+
+  /* CONTENT */
+  .content { padding: 20px 24px; max-width: 1400px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* KPI CARDS */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  .kpi-card { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 5px solid #2E75B6; }
+  .kpi-card.green { border-left-color: #70ad47; }
+  .kpi-card.orange { border-left-color: #ed7d31; }
+  .kpi-card.red { border-left-color: #c00000; }
+  .kpi-label { font-size: 13px; color: #666; margin-bottom: 4px; }
+  .kpi-value { font-size: 30px; font-weight: bold; color: #1F4E79; line-height: 1; }
+  .kpi-unit { font-size: 14px; color: #888; margin-top: 4px; }
+  .kpi-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 13px; margin-top: 6px; font-weight: bold; }
+  .badge-good { background: #e2efda; color: #375623; }
+  .badge-mid { background: #fff2cc; color: #7f6000; }
+  .badge-warn { background: #fce4d6; color: #c00000; }
+
+  /* CHART GRID */
+  .chart-grid { display: grid; gap: 16px; margin-bottom: 20px; }
+  .chart-grid-2 { grid-template-columns: 1fr 1fr; }
+  .chart-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .chart-card { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .chart-card h3 { font-size: 15px; color: #1F4E79; margin-bottom: 14px; font-weight: bold; border-bottom: 2px solid #BDD7EE; padding-bottom: 8px; }
+  .chart-container { position: relative; }
+
+  /* BODY MAP */
+  .body-map-wrap { display: flex; gap: 20px; align-items: flex-start; }
+  .body-map-svg { flex: 0 0 auto; }
+  .body-map-legend { flex: 1; }
+  .legend-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 15px; }
+  .legend-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+  .legend-bar-bg { flex: 1; background: #f0f0f0; border-radius: 6px; height: 14px; overflow: hidden; }
+  .legend-bar { height: 100%; border-radius: 6px; transition: width 0.5s; }
+  .legend-pct { font-size: 14px; font-weight: bold; min-width: 42px; text-align: right; }
+
+  /* PROGRESS GAUGE */
+  .gauge-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .gauge-label { font-size: 14px; color: #555; text-align: center; }
+
+  /* TABLE STYLE */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .data-table th { background: #1F4E79; color: #fff; padding: 8px 12px; text-align: center; }
+  .data-table td { padding: 7px 12px; border-bottom: 1px solid #e0e0e0; }
+  .data-table tr:nth-child(even) td { background: #f7f9fc; }
+  .data-table tr:hover td { background: #deeaf1; }
+  .severity-pill { padding: 2px 10px; border-radius: 10px; font-size: 13px; font-weight: bold; display: inline-block; }
+
+  /* PROGRESS BAR */
+  .progress-track { background: #e0e0e0; border-radius: 8px; height: 18px; position: relative; overflow: visible; }
+  .progress-fill { height: 100%; border-radius: 8px; transition: width 0.5s; }
+  .progress-target { position: absolute; top: -4px; bottom: -4px; width: 3px; background: #c00000; border-radius: 2px; }
+  .progress-target::after { content: attr(data-label); position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #c00000; white-space: nowrap; font-weight: bold; }
+
+  /* BEHAVIOR ITEMS */
+  .behavior-item { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
+  .bitem-text { flex: 1; }
+  .bitem-bar { width: 120px; background: #e0e0e0; border-radius: 6px; height: 12px; overflow: hidden; }
+  .bitem-fill { height: 100%; border-radius: 6px; }
+  .bitem-score { width: 36px; text-align: right; font-weight: bold; font-size: 14px; }
+
+  @media (max-width: 700px) {
+    .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+    .body-map-wrap { flex-direction: column; }
+    .tabs { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Dashboard สรุปผลข้อมูลเบื้องต้น MSDs</h1>
+    <p>กลุ่มงานอาชีวเวชกรรม โรงพยาบาลสกลนคร | ปีงบประมาณ 2569</p>
+  </div>
+  <div class="header-badge">
+    <div style="font-size:11px;opacity:.8;">วันที่เก็บข้อมูล</div>
+    <div style="font-size:15px;font-weight:bold;">5–9 มิ.ย. 2569</div>
+    <div style="font-size:11px;opacity:.8;">Pre-test</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showTab('overview')">ภาพรวม</div>
+  <div class="tab" onclick="showTab('msds')">อาการ MSDs</div>
+  <div class="tab" onclick="showTab('kb')">ความรู้ & พฤติกรรม</div>
+  <div class="tab" onclick="showTab('dept')">หน่วยงาน</div>
+</div>
+
+<div class="content">
+
+<!-- ============================================================ -->
+<!-- TAB: OVERVIEW                                                -->
+<!-- ============================================================ -->
+<div id="tab-overview" class="tab-panel active">
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-label">ผู้ตอบแบบสอบถาม</div>
+      <div class="kpi-value">109</div>
+      <div class="kpi-unit">คน จาก 13 หน่วยงาน</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">ความรู้ด้านการยศาสตร์</div>
+      <div class="kpi-value">8.30</div>
+      <div class="kpi-unit">คะแนนเฉลี่ย (จาก 10)</div>
+      <span class="kpi-badge badge-good">ระดับดี (83%)</span>
+    </div>
+    <div class="kpi-card orange">
+      <div class="kpi-label">พฤติกรรมการยศาสตร์</div>
+      <div class="kpi-value">2.90</div>
+      <div class="kpi-unit">คะแนนเฉลี่ย (จาก 5.00)</div>
+      <span class="kpi-badge badge-mid">ปานกลาง (เป้า ≥3.41)</span>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">ตำแหน่งสูงสุด: ไหล่</div>
+      <div class="kpi-value">90.8%</div>
+      <div class="kpi-unit">มีอาการ MSDs</div>
+      <span class="kpi-badge badge-warn">22.9% ระดับมาก</span>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">คอ</div>
+      <div class="kpi-value">84.4%</div>
+      <div class="kpi-unit">มีอาการ MSDs</div>
+      <span class="kpi-badge badge-warn">15.6% ระดับมาก</span>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <!-- Radar -->
+    <div class="chart-card">
+      <h3>ร้อยละผู้มีอาการ MSDs จำแนกตามตำแหน่งร่างกาย</h3>
+      <div class="chart-container" style="height:300px;">
+        <canvas id="radarChart"></canvas>
+      </div>
+    </div>
+    <!-- Severity overview horizontal bar -->
+    <div class="chart-card">
+      <h3>ระดับความรุนแรง MSDs (% ระดับมาก–มากเกินทน) จำแนกตามตำแหน่ง</h3>
+      <div class="chart-container" style="height:300px;">
+        <canvas id="severityBar"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <!-- Knowledge vs Behavior gauge -->
+    <div class="chart-card">
+      <h3>เปรียบเทียบ ความรู้ vs พฤติกรรม</h3>
+      <div class="chart-container" style="height:260px;">
+        <canvas id="kbCompare"></canvas>
+      </div>
+    </div>
+    <!-- Pre vs Post placeholder -->
+    <div class="chart-card">
+      <h3>ช่องว่างพฤติกรรม: Pre-test vs เป้าหมาย Post-test</h3>
+      <div style="padding: 12px 0;">
+        <div style="margin-bottom:16px;">
+          <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px;">
+            <span>Pre-test (ปัจจุบัน)</span>
+            <span style="font-weight:bold;">2.90 / 5.00</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" style="width:58%;background:#ed7d31;"></div>
+            <div class="progress-target" style="left:68.2%;" data-label="เป้าหมาย 3.41"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#888;margin-top:4px;">
+            <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+          </div>
+        </div>
+        <div style="background:#fce4d6;border-radius:8px;padding:10px 14px;margin-bottom:10px;">
+          <div style="font-size:14px;color:#c00000;font-weight:bold;">ต้องพัฒนา +0.51 คะแนน</div>
+          <div style="font-size:13px;color:#666;margin-top:2px;">จาก 2.90 → 3.41 (ระดับดี)</div>
+        </div>
+        <div style="font-size:14px;font-weight:bold;margin-bottom:8px;">เป้าหมายโครงการ (Post-test):</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <div style="background:#e2efda;border-radius:8px;padding:8px 14px;flex:1;min-width:120px;">
+            <div style="font-size:13px;color:#375623;">ร้อยละ</div>
+            <div style="font-size:22px;font-weight:bold;color:#375623;">≥ 80%</div>
+            <div style="font-size:12px;color:#666;">ของบุคลากรที่เข้าร่วม</div>
+          </div>
+          <div style="background:#deeaf1;border-radius:8px;padding:8px 14px;flex:1;min-width:120px;">
+            <div style="font-size:13px;color:#1F4E79;">ค่าเฉลี่ยพฤติกรรม</div>
+            <div style="font-size:22px;font-weight:bold;color:#1F4E79;">≥ 3.41</div>
+            <div style="font-size:12px;color:#666;">ระดับดี–ดีมาก</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: MSDs                                                    -->
+<!-- ============================================================ -->
+<div id="tab-msds" class="tab-panel">
+  <div class="chart-grid chart-grid-2" style="margin-bottom:16px;">
+    <div class="chart-card">
+      <h3>ความชุกอาการ MSDs จำแนกระดับความรุนแรง (% n=109)</h3>
+      <div class="chart-container" style="height:320px;">
+        <canvas id="stackedSeverity"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>ความถี่อาการ MSDs จำแนกตำแหน่ง (% n=109)</h3>
+      <div class="chart-container" style="height:320px;">
+        <canvas id="stackedFreq"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card" style="margin-bottom:16px;">
+    <h3>แผนที่อาการ MSDs (Body Map) — ร้อยละที่มีอาการ</h3>
+    <div class="body-map-wrap">
+      <!-- SVG Body Map -->
+      <div class="body-map-svg">
+        <svg width="200" height="420" viewBox="0 0 200 420" xmlns="http://www.w3.org/2000/svg" style="display:block;">
+          <!-- Head -->
+          <ellipse cx="100" cy="36" rx="24" ry="26" fill="#e8d5b7" stroke="#aaa" stroke-width="1.5"/>
+          <!-- Neck -->
+          <rect x="91" y="60" width="18" height="16" rx="4" fill="#f07030" opacity="0.85"/>
+          <!-- Torso upper -->
+          <rect x="60" y="75" width="80" height="60" rx="8" fill="#f07030" opacity="0.75"/>
+          <!-- Shoulders -->
+          <ellipse cx="52" cy="88" rx="20" ry="16" fill="#c00000" opacity="0.85"/>
+          <ellipse cx="148" cy="88" rx="20" ry="16" fill="#c00000" opacity="0.85"/>
+          <!-- Torso lower (hips) -->
+          <rect x="62" y="134" width="76" height="50" rx="6" fill="#ffc000" opacity="0.75"/>
+          <!-- Upper arms -->
+          <rect x="28" y="100" width="22" height="50" rx="8" fill="#ffc000" opacity="0.75"/>
+          <rect x="150" y="100" width="22" height="50" rx="8" fill="#ffc000" opacity="0.75"/>
+          <!-- Forearms (lower arms) -->
+          <rect x="24" y="150" width="20" height="48" rx="8" fill="#ffc000" opacity="0.75"/>
+          <rect x="156" y="150" width="20" height="48" rx="8" fill="#ffc000" opacity="0.75"/>
+          <!-- Hands/wrists -->
+          <ellipse cx="34" cy="210" rx="13" ry="16" fill="#f07030" opacity="0.8"/>
+          <ellipse cx="166" cy="210" rx="13" ry="16" fill="#f07030" opacity="0.8"/>
+          <!-- Thighs / hips area -->
+          <rect x="65" y="183" width="30" height="65" rx="8" fill="#ffc000" opacity="0.75"/>
+          <rect x="105" y="183" width="30" height="65" rx="8" fill="#ffc000" opacity="0.75"/>
+          <!-- Knees -->
+          <ellipse cx="80" cy="258" rx="16" ry="14" fill="#ffc000" opacity="0.7"/>
+          <ellipse cx="120" cy="258" rx="16" ry="14" fill="#ffc000" opacity="0.7"/>
+          <!-- Calves (legs) -->
+          <rect x="65" y="270" width="28" height="64" rx="8" fill="#70ad47" opacity="0.75"/>
+          <rect x="107" y="270" width="28" height="64" rx="8" fill="#70ad47" opacity="0.75"/>
+          <!-- Feet -->
+          <ellipse cx="79" cy="343" rx="18" ry="11" fill="#ffc000" opacity="0.75"/>
+          <ellipse cx="121" cy="343" rx="18" ry="11" fill="#ffc000" opacity="0.75"/>
+
+          <!-- Labels with lines -->
+          <!-- คอ -->
+          <line x1="100" y1="68" x2="155" y2="68" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="72" font-size="12" fill="#1F4E79" font-family="Angsana New,Tahoma">คอ 84.4%</text>
+          <!-- ไหล่ L -->
+          <line x1="52" y1="88" x2="18" y2="88" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="1" y="92" font-size="11" fill="#c00000" font-family="Angsana New,Tahoma">ไหล่</text>
+          <!-- ไหล่ R -->
+          <line x1="148" y1="88" x2="180" y2="78" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="155" y="82" font-size="11" fill="#c00000" font-family="Angsana New,Tahoma">90.8%</text>
+          <!-- หลังส่วนบน -->
+          <line x1="100" y1="105" x2="155" y2="105" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="109" font-size="11" fill="#1F4E79" font-family="Angsana New,Tahoma">หลังบน 80.7%</text>
+          <!-- หลังส่วนล่าง -->
+          <line x1="100" y1="148" x2="155" y2="148" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="152" font-size="11" fill="#1F4E79" font-family="Angsana New,Tahoma">หลังล่าง 81.7%</text>
+          <!-- แขนท่อนล่าง -->
+          <line x1="24" y1="174" x2="4" y2="174" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="1" y="170" font-size="10" fill="#7f6000" font-family="Angsana New,Tahoma">แขนล่าง</text>
+          <text x="1" y="181" font-size="10" fill="#7f6000" font-family="Angsana New,Tahoma">62.4%</text>
+          <!-- มือ -->
+          <line x1="34" y1="210" x2="10" y2="215" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="1" y="218" font-size="10" fill="#1F4E79" font-family="Angsana New,Tahoma">มือ 77.1%</text>
+          <!-- สะโพก -->
+          <line x1="100" y1="195" x2="155" y2="195" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="199" font-size="11" fill="#7f6000" font-family="Angsana New,Tahoma">สะโพก 59.6%</text>
+          <!-- เข่า -->
+          <line x1="100" y1="258" x2="155" y2="258" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="262" font-size="11" fill="#7f6000" font-family="Angsana New,Tahoma">เข่า 50.5%</text>
+          <!-- น่อง -->
+          <line x1="100" y1="302" x2="155" y2="302" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="306" font-size="11" fill="#375623" font-family="Angsana New,Tahoma">น่อง 49.5%</text>
+          <!-- เท้า -->
+          <line x1="100" y1="343" x2="155" y2="343" stroke="#555" stroke-width="1" stroke-dasharray="3"/>
+          <text x="158" y="347" font-size="11" fill="#7f6000" font-family="Angsana New,Tahoma">เท้า 57.8%</text>
+        </svg>
+      </div>
+
+      <!-- Legend & bars -->
+      <div class="body-map-legend">
+        <div style="margin-bottom:10px;">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+            <span style="display:flex;align-items:center;gap:4px;font-size:13px;"><span style="display:inline-block;width:14px;height:14px;background:#c00000;border-radius:3px;opacity:.85;"></span>สูงมาก (≥85%)</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:13px;"><span style="display:inline-block;width:14px;height:14px;background:#f07030;border-radius:3px;opacity:.85;"></span>สูง (75–84%)</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:13px;"><span style="display:inline-block;width:14px;height:14px;background:#ffc000;border-radius:3px;opacity:.85;"></span>ปานกลาง (50–74%)</span>
+            <span style="display:flex;align-items:center;gap:4px;font-size:13px;"><span style="display:inline-block;width:14px;height:14px;background:#70ad47;border-radius:3px;opacity:.85;"></span>ต่ำ (&lt;50%)</span>
+          </div>
+        </div>
+        <div id="bodyLegendRows"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MSDs detail table -->
+  <div class="chart-card">
+    <h3>ตารางสรุปอาการ MSDs จำแนกตำแหน่งร่างกาย (n=109)</h3>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ตำแหน่ง</th>
+          <th>%มีอาการรวม</th>
+          <th>%เล็กน้อย</th>
+          <th>%ปานกลาง</th>
+          <th>%มาก–มากเกินทน</th>
+          <th>%ปวดทุกวัน (≥1/วัน)</th>
+          <th>ระดับความเสี่ยง</th>
+        </tr>
+      </thead>
+      <tbody id="msdsTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: KNOWLEDGE & BEHAVIOR                                    -->
+<!-- ============================================================ -->
+<div id="tab-kb" class="tab-panel">
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>คะแนนความรู้ด้านการยศาสตร์ (Avg = 8.30/10 = ดี)</h3>
+      <div class="chart-container" style="height:240px;">
+        <canvas id="knowledgeDoughnut"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>พฤติกรรมการปฏิบัติงานยศาสตร์ (Avg = 2.90/5.00)</h3>
+      <div class="chart-container" style="height:240px;">
+        <canvas id="behaviorGauge"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>ข้อที่บุคลากรมักตอบผิดบ่อย (ต้องเน้นในการฝึกอบรม)</h3>
+      <div style="padding: 4px 0;">
+        <div style="display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:start;margin-bottom:12px;">
+          <div style="background:#c00000;color:#fff;border-radius:6px;text-align:center;padding:8px 0;font-weight:bold;font-size:16px;">ข้อ 8</div>
+          <div>
+            <div style="font-size:14px;font-weight:bold;color:#c00000;">"Microbreak ไม่มีผลต่อการลดความเมื่อยล้า" (ตอบผิด = ถูก)</div>
+            <div style="font-size:13px;color:#555;margin-top:2px;">บุคลากรเข้าใจผิดว่า Microbreak ไม่มีประโยชน์</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:start;margin-bottom:12px;">
+          <div style="background:#c00000;color:#fff;border-radius:6px;text-align:center;padding:8px 0;font-weight:bold;font-size:16px;">ข้อ 10</div>
+          <div>
+            <div style="font-size:14px;font-weight:bold;color:#c00000;">"ไม่มีอาการ = ไม่ต้องจัดสถานีงาน" (ตอบผิด = ถูก)</div>
+            <div style="font-size:13px;color:#555;margin-top:2px;">แนวคิด Reactive แทน Preventive Ergonomics</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:start;margin-bottom:12px;">
+          <div style="background:#ed7d31;color:#fff;border-radius:6px;text-align:center;padding:8px 0;font-weight:bold;font-size:16px;">ข้อ 2</div>
+          <div>
+            <div style="font-size:14px;font-weight:bold;color:#ed7d31;">ระยะห่างสายตา–จอ 50–70 ซม.</div>
+            <div style="font-size:13px;color:#555;margin-top:2px;">ไม่ทราบมาตรฐานระยะห่างที่แนะนำ</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:start;">
+          <div style="background:#ed7d31;color:#fff;border-radius:6px;text-align:center;padding:8px 0;font-weight:bold;font-size:16px;">ข้อ 4</div>
+          <div>
+            <div style="font-size:14px;font-weight:bold;color:#ed7d31;">ข้อศอกงอ 90° วางแป้นพิมพ์/เมาส์</div>
+            <div style="font-size:13px;color:#555;margin-top:2px;">ไม่ตระหนักถึงมุมข้อศอกที่เหมาะสม</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h3>พฤติกรรมรายด้าน (คะแนนเฉลี่ย จาก 5)</h3>
+      <div id="behaviorItems"></div>
+    </div>
+  </div>
+
+  <!-- Knowledge behavior gap insight -->
+  <div class="chart-card" style="margin-top:0;">
+    <h3>ช่องว่างระหว่างความรู้และพฤติกรรม (Knowledge–Behavior Gap)</h3>
+    <div class="chart-container" style="height:180px;">
+      <canvas id="kbGapChart"></canvas>
+    </div>
+    <div style="margin-top:12px;background:#fff2cc;border-radius:8px;padding:10px 14px;font-size:14px;">
+      <strong>การวิเคราะห์:</strong> บุคลากรมีความรู้ระดับดี (83%) แต่พฤติกรรมยังอยู่ระดับปานกลาง (58%) — ช่องว่าง 25% สะท้อน <strong>"Knowledge-Action Gap"</strong> ที่พบบ่อยในงาน Occupational Health: การรู้เพียงอย่างเดียวยังไม่เพียงพอ ต้องมีสิ่งแวดล้อมสนับสนุนและการฝึกปฏิบัติจริง
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- TAB: DEPT                                                    -->
+<!-- ============================================================ -->
+<div id="tab-dept" class="tab-panel">
+  <div class="chart-grid chart-grid-2">
+    <div class="chart-card">
+      <h3>จำนวนผู้เข้าร่วมจำแนกตามหน่วยงาน (n=109)</h3>
+      <div class="chart-container" style="height:340px;">
+        <canvas id="deptChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>สัดส่วนผู้เข้าร่วมตามหน่วยงาน (%)</h3>
+      <div class="chart-container" style="height:340px;">
+        <canvas id="deptPie"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>ตารางสรุปจำนวนผู้ตอบแบบสอบถามตามหน่วยงาน</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>หน่วยงาน</th><th>จำนวน (คน)</th><th>ร้อยละ</th><th>สัดส่วน</th></tr>
+      </thead>
+      <tbody id="deptTableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- end .content -->
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────
+const msdsData = [
+  { r:'ไหล่',         any:90.8, mild:32.1, mod:35.8, sev:22.9, daily:14.7, risk:'สูงมาก' },
+  { r:'คอ',           any:84.4, mild:40.4, mod:28.4, sev:15.6, daily:12.0, risk:'สูงมาก' },
+  { r:'หลังส่วนล่าง', any:81.7, mild:39.4, mod:25.7, sev:16.5, daily: 9.2, risk:'สูง'    },
+  { r:'หลังส่วนบน',   any:80.7, mild:33.9, mod:29.4, sev:17.4, daily:11.9, risk:'สูง'    },
+  { r:'มือและข้อมือ', any:77.1, mild:42.2, mod:25.7, sev: 9.2, daily: 6.4, risk:'ปานกลาง' },
+  { r:'แขนท่อนล่าง',  any:62.4, mild:43.1, mod:13.8, sev: 5.5, daily: 2.7, risk:'ปานกลาง' },
+  { r:'สะโพก',        any:59.6, mild:34.9, mod:17.4, sev: 7.3, daily: 5.6, risk:'ปานกลาง' },
+  { r:'เท้าและข้อเท้า',any:57.8, mild:33.0, mod:18.3, sev: 6.4, daily: 5.5, risk:'ปานกลาง' },
+  { r:'เข่า',          any:50.5, mild:31.2, mod:13.8, sev: 5.5, daily: 2.7, risk:'ปานกลาง' },
+  { r:'น่อง',          any:49.5, mild:34.9, mod:10.1, sev: 4.6, daily: 1.8, risk:'ต่ำ'   },
+];
+
+const freqData = [
+  { r:'คอ',           no:17.4, w12:54.1, w34:16.5, d1:8.3, dm:3.7 },
+  { r:'ไหล่',         no:11.9, w12:48.6, w34:24.8, d1:8.3, dm:6.4 },
+  { r:'หลังส่วนบน',   no:29.4, w12:40.4, w34:18.3, d1:7.3, dm:4.6 },
+  { r:'หลังส่วนล่าง', no:26.6, w12:50.5, w34:13.8, d1:5.5, dm:3.7 },
+  { r:'แขนท่อนล่าง',  no:47.7, w12:34.9, w34:14.7, d1:1.8, dm:0.9 },
+  { r:'มือและข้อมือ', no:32.1, w12:44.0, w34:17.4, d1:4.6, dm:1.8 },
+  { r:'สะโพก',        no:45.9, w12:38.5, w34:10.1, d1:2.8, dm:2.8 },
+  { r:'เข่า',          no:50.5, w12:35.8, w34:11.0, d1:1.8, dm:0.9 },
+  { r:'น่อง',          no:55.0, w12:34.9, w34: 8.3, d1:0.9, dm:0.9 },
+  { r:'เท้าและข้อเท้า',no:43.1, w12:41.3, w34:10.1, d1:4.6, dm:0.9 },
+];
+
+const deptData = [
+  { d:'เวชระเบียนและข้อมูลทางการแพทย์', n:28 },
+  { d:'เทคโนโลยีสารสนเทศ', n:15 },
+  { d:'บริหารทั่วไป', n:12 },
+  { d:'พัสดุ', n:10 },
+  { d:'บัญชี', n:8 },
+  { d:'การเงิน', n:6 },
+  { d:'ทรัพยากรบุคคล (HR)', n:6 },
+  { d:'ยุทธศาสตร์และแผนงานโครงการ', n:5 },
+  { d:'สุขภาพดิจิทัล', n:5 },
+  { d:'พัฒนาทรัพยากรบุคคล (HRD)', n:4 },
+  { d:'ศูนย์พัฒนาคุณภาพ (HA)', n:4 },
+  { d:'ประกันสุขภาพ (รวมจัดเก็บรายได้)', n:3 },
+  { d:'IC', n:3 },
+];
+
+const behaviorItems = [
+  { label:'ปรับเก้าอี้ (เข่า 90°, เท้าราบ)', score: 3.1 },
+  { label:'จัดจอให้ระดับสายตา ห่าง 50–70 ซม.', score: 2.8 },
+  { label:'วางเท้าราบกับพื้นขณะนั่ง', score: 3.4 },
+  { label:'นั่งพิงพนักและมี Lumbar support', score: 3.0 },
+  { label:'หลีกเลี่ยงนั่งท่าเดิมเกิน 1 ชม.', score: 2.6 },
+  { label:'พัก Microbreak 5 นาที ทุก 1 ชม.', score: 2.4 },
+  { label:'ยืดเหยียดกล้ามเนื้อ 2 รอบ/วัน', score: 2.5 },
+  { label:'ปรับแป้นพิมพ์/เมาส์ (ข้อศอก 90°)', score: 2.7 },
+  { label:'สังเกตและแก้ท่าทางเมื่อรู้สึกปวด', score: 3.2 },
+  { label:'ใช้วัสดุทดแทนปรับสถานีงาน', score: 2.9 },
+];
+
+// ─── COLORS ───────────────────────────────────────────────────
+const riskColor = { 'สูงมาก':'#c00000', 'สูง':'#ed7d31', 'ปานกลาง':'#ffc000', 'ต่ำ':'#70ad47' };
+const riskBg   = { 'สูงมาก':'#fce4d6', 'สูง':'#fff2cc', 'ปานกลาง':'#f2f2f2', 'ต่ำ':'#e2efda' };
+
+// ─── TAB SWITCH ───────────────────────────────────────────────
+function showTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ─── BODY MAP LEGEND ──────────────────────────────────────────
+function buildBodyLegend() {
+  const container = document.getElementById('bodyLegendRows');
+  const sorted = [...msdsData].sort((a,b) => b.any - a.any);
+  sorted.forEach(d => {
+    const row = document.createElement('div');
+    row.className = 'legend-row';
+    const color = riskColor[d.risk];
+    row.innerHTML = `
+      <div class="legend-dot" style="background:${color};"></div>
+      <div style="flex:1;min-width:120px;font-size:14px;">${d.r}</div>
+      <div class="legend-bar-bg">
+        <div class="legend-bar" style="width:${d.any}%;background:${color};"></div>
+      </div>
+      <div class="legend-pct" style="color:${color};">${d.any}%</div>
+    `;
+    container.appendChild(row);
+  });
+}
+
+// ─── MSDs TABLE ───────────────────────────────────────────────
+function buildMsdsTable() {
+  const tbody = document.getElementById('msdsTableBody');
+  msdsData.forEach(d => {
+    const tr = document.createElement('tr');
+    const pillStyle = `background:${riskBg[d.risk]};color:${riskColor[d.risk]};`;
+    tr.innerHTML = `
+      <td style="font-weight:bold;">${d.r}</td>
+      <td style="text-align:center;font-weight:bold;">${d.any}%</td>
+      <td style="text-align:center;">${d.mild}%</td>
+      <td style="text-align:center;">${d.mod}%</td>
+      <td style="text-align:center;font-weight:bold;color:${riskColor[d.risk]};">${d.sev}%</td>
+      <td style="text-align:center;">${d.daily}%</td>
+      <td style="text-align:center;"><span class="severity-pill" style="${pillStyle}">${d.risk}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── DEPT TABLE ───────────────────────────────────────────────
+function buildDeptTable() {
+  const tbody = document.getElementById('deptTableBody');
+  const total = deptData.reduce((s,d) => s+d.n, 0);
+  deptData.forEach((d, i) => {
+    const pct = (d.n/total*100).toFixed(1);
+    const barW = Math.round(d.n/total*100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="text-align:center;color:#888;">${i+1}</td>
+      <td>${d.d}</td>
+      <td style="text-align:center;font-weight:bold;">${d.n}</td>
+      <td style="text-align:center;">${pct}%</td>
+      <td><div style="background:#e0e0e0;border-radius:4px;height:10px;"><div style="background:#2E75B6;border-radius:4px;height:10px;width:${barW}%;"></div></div></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── BEHAVIOR ITEMS ───────────────────────────────────────────
+function buildBehaviorItems() {
+  const container = document.getElementById('behaviorItems');
+  behaviorItems.forEach(item => {
+    const pct = (item.score/5)*100;
+    const targetPct = (3.41/5)*100;
+    const color = item.score >= 3.41 ? '#70ad47' : item.score >= 2.61 ? '#ffc000' : '#c00000';
+    const div = document.createElement('div');
+    div.className = 'behavior-item';
+    div.innerHTML = `
+      <div class="bitem-text" style="font-size:13px;">${item.label}</div>
+      <div class="bitem-bar" style="position:relative;">
+        <div class="bitem-fill" style="width:${pct}%;background:${color};"></div>
+        <div style="position:absolute;top:-2px;bottom:-2px;left:${targetPct}%;width:2px;background:#c00000;opacity:0.6;"></div>
+      </div>
+      <div class="bitem-score" style="color:${color};">${item.score.toFixed(1)}</div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ─── CHARTS ───────────────────────────────────────────────────
+const font = { family: "'Angsana New', 'Sarabun', Tahoma, sans-serif", size: 13 };
+Chart.defaults.font = font;
+Chart.defaults.plugins.legend.labels.font = font;
+
+// RADAR (overview)
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: msdsData.map(d => d.r),
+    datasets: [{
+      label: '% มีอาการ',
+      data: msdsData.map(d => d.any),
+      backgroundColor: 'rgba(192,0,0,0.15)',
+      borderColor: '#c00000',
+      borderWidth: 2,
+      pointBackgroundColor: '#c00000',
+      pointRadius: 4,
+    }, {
+      label: '% ระดับมาก–มากเกินทน',
+      data: msdsData.map(d => d.sev),
+      backgroundColor: 'rgba(237,125,49,0.15)',
+      borderColor: '#ed7d31',
+      borderWidth: 2,
+      pointBackgroundColor: '#ed7d31',
+      pointRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: { r: { min: 0, max: 100, ticks: { stepSize: 20, font }, pointLabels: { font: { size: 12, family: "'Angsana New', Tahoma" } } } },
+    plugins: { legend: { position: 'bottom' } }
+  }
+});
+
+// SEVERITY BAR (overview)
+new Chart(document.getElementById('severityBar'), {
+  type: 'bar',
+  data: {
+    labels: msdsData.map(d => d.r),
+    datasets: [{
+      label: '% มาก–มากเกินทน',
+      data: msdsData.map(d => d.sev),
+      backgroundColor: msdsData.map(d => riskColor[d.risk]),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { max: 30, title: { display: true, text: 'ร้อยละ (%)', font } },
+      y: { ticks: { font: { size: 13, family: "'Angsana New', Tahoma" } } }
+    }
+  }
+});
+
+// KB COMPARE
+new Chart(document.getElementById('kbCompare'), {
+  type: 'bar',
+  data: {
+    labels: ['ความรู้\n(จาก 10 คะแนน)', 'พฤติกรรม\n(จาก 5 คะแนน × 2)'],
+    datasets: [
+      { label: 'ผลจริง', data: [8.30, 5.80], backgroundColor: ['#2E75B6', '#ed7d31'], borderRadius: 6 },
+      { label: 'เป้าหมาย', data: [8.0, 6.82], backgroundColor: 'rgba(0,0,0,0)', borderColor: ['#1F4E79','#c00000'], borderWidth: 2, borderDash: [5,3], type: 'bar' }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' }, tooltip: {
+      callbacks: { label: ctx => ctx.datasetIndex===0 ? `ผลจริง: ${ctx.raw}` : `เป้าหมาย: ${ctx.raw}` }
+    }},
+    scales: { y: { max: 10, title: { display: true, text: 'คะแนน', font } } }
+  }
+});
+
+// STACKED SEVERITY (msds tab)
+new Chart(document.getElementById('stackedSeverity'), {
+  type: 'bar',
+  data: {
+    labels: msdsData.map(d => d.r),
+    datasets: [
+      { label: 'ไม่มีอาการ', data: msdsData.map(d => 100-d.any), backgroundColor: '#d9d9d9', borderRadius: 0 },
+      { label: 'เล็กน้อย',   data: msdsData.map(d => d.mild),    backgroundColor: '#9dc3e6' },
+      { label: 'ปานกลาง',   data: msdsData.map(d => d.mod),     backgroundColor: '#ed7d31' },
+      { label: 'มาก–มากเกินทน', data: msdsData.map(d => d.sev), backgroundColor: '#c00000' },
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index' } },
+    scales: {
+      x: { stacked: true, max: 100, title: { display: true, text: '%', font } },
+      y: { stacked: true, ticks: { font: { size: 12, family: "'Angsana New', Tahoma" } } }
+    }
+  }
+});
+
+// STACKED FREQUENCY (msds tab)
+new Chart(document.getElementById('stackedFreq'), {
+  type: 'bar',
+  data: {
+    labels: freqData.map(d => d.r),
+    datasets: [
+      { label: 'ไม่มีอาการ',       data: freqData.map(d => d.no),  backgroundColor: '#d9d9d9' },
+      { label: '1-2 ครั้ง/สัปดาห์', data: freqData.map(d => d.w12), backgroundColor: '#9dc3e6' },
+      { label: '3-4 ครั้ง/สัปดาห์', data: freqData.map(d => d.w34), backgroundColor: '#ffc000' },
+      { label: '1+ ครั้ง/วัน',       data: freqData.map(d => d.d1+d.dm), backgroundColor: '#c00000' },
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' }, tooltip: { mode: 'index' } },
+    scales: {
+      x: { stacked: true, max: 100, title: { display: true, text: '%', font } },
+      y: { stacked: true, ticks: { font: { size: 12, family: "'Angsana New', Tahoma" } } }
+    }
+  }
+});
+
+// KNOWLEDGE DOUGHNUT
+new Chart(document.getElementById('knowledgeDoughnut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['ระดับดี (80–100%)', 'ระดับปานกลาง (60–79%)', 'ควรปรับปรุง (≤59%)'],
+    datasets: [{ data: [72, 28, 9], backgroundColor: ['#70ad47','#ffc000','#c00000'], borderWidth: 2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} คน` } }
+    },
+    cutout: '60%'
+  },
+  plugins: [{
+    id: 'centerText',
+    beforeDraw: chart => {
+      const { ctx, chartArea: { width, height, left, top } } = chart;
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const cx = left + width/2, cy = top + height/2;
+      ctx.fillStyle = '#1F4E79'; ctx.font = "bold 28px 'Angsana New',Tahoma";
+      ctx.fillText('8.30', cx, cy - 10);
+      ctx.fillStyle = '#555'; ctx.font = "14px 'Angsana New',Tahoma";
+      ctx.fillText('/ 10 คะแนน', cx, cy + 14);
+      ctx.restore();
+    }
+  }]
+});
+
+// BEHAVIOR GAUGE (half-donut style)
+new Chart(document.getElementById('behaviorGauge'), {
+  type: 'doughnut',
+  data: {
+    labels: ['ค่าปัจจุบัน','ช่องว่างถึงเป้า','ที่เหลือ'],
+    datasets: [{ data: [2.90, 0.51, 1.59], backgroundColor: ['#ed7d31','rgba(192,0,0,0.3)','#e0e0e0'], borderWidth: [2,1,0] }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    rotation: -90, circumference: 180,
+    plugins: {
+      legend: { position: 'bottom' },
+      tooltip: { callbacks: { label: ctx => ctx.label === 'ค่าปัจจุบัน' ? `2.90 / 5.00` : ctx.label === 'ช่องว่างถึงเป้า' ? `ต้องพัฒนาอีก +0.51` : '' } }
+    },
+    cutout: '55%'
+  },
+  plugins: [{
+    id: 'gaugeText',
+    beforeDraw: chart => {
+      const { ctx, chartArea: { width, height, left, top } } = chart;
+      ctx.save();
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const cx = left + width/2, cy = top + height * 0.72;
+      ctx.fillStyle = '#ed7d31'; ctx.font = "bold 30px 'Angsana New',Tahoma";
+      ctx.fillText('2.90', cx, cy - 14);
+      ctx.fillStyle = '#555'; ctx.font = "14px 'Angsana New',Tahoma";
+      ctx.fillText('/ 5.00', cx, cy + 10);
+      ctx.fillStyle = '#c00000'; ctx.font = "bold 13px 'Angsana New',Tahoma";
+      ctx.fillText('เป้าหมาย ≥ 3.41', cx, cy + 28);
+      ctx.restore();
+    }
+  }]
+});
+
+// KB GAP CHART
+new Chart(document.getElementById('kbGapChart'), {
+  type: 'bar',
+  data: {
+    labels: ['ความรู้ (Knowledge)', 'พฤติกรรม (Behavior)'],
+    datasets: [
+      { label: 'ผลจริง (%)', data: [83, 58], backgroundColor: ['#2E75B6','#ed7d31'], borderRadius: 6, barThickness: 50 },
+      { label: 'เป้าหมาย (%)', data: [80, 68.2], backgroundColor: ['rgba(0,0,0,0)','rgba(0,0,0,0)'], borderColor: ['#1F4E79','#c00000'], borderWidth: 2, borderDash: [5,3], barThickness: 50 }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom' } },
+    scales: { y: { max: 100, title: { display: true, text: 'ร้อยละ (%)', font } } }
+  }
+});
+
+// DEPT BAR
+new Chart(document.getElementById('deptChart'), {
+  type: 'bar',
+  data: {
+    labels: deptData.map(d => d.d),
+    datasets: [{ label: 'จำนวน (คน)', data: deptData.map(d => d.n), backgroundColor: '#2E75B6', borderRadius: 4 }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { title: { display: true, text: 'จำนวน (คน)', font } },
+      y: { ticks: { font: { size: 11, family: "'Angsana New', Tahoma" } } }
+    }
+  }
+});
+
+// DEPT PIE
+const pieColors = ['#1F4E79','#2E75B6','#4472C4','#5B9BD5','#70AD47','#ED7D31','#FFC000','#FF0000','#7030A0','#00B0F0','#92D050','#FF7F7F','#C00000'];
+new Chart(document.getElementById('deptPie'), {
+  type: 'pie',
+  data: {
+    labels: deptData.map(d => d.d),
+    datasets: [{ data: deptData.map(d => d.n), backgroundColor: pieColors, borderWidth: 2 }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'right', labels: { font: { size: 12, family: "'Angsana New', Tahoma" }, boxWidth: 14 } },
+      tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} คน (${(ctx.raw/109*100).toFixed(1)}%)` } }
+    }
+  }
+});
+
+// ─── INIT ─────────────────────────────────────────────────────
+buildBodyLegend();
+buildMsdsTable();
+buildDeptTable();
+buildBehaviorItems();
+</script>
+</body>
+</html>
