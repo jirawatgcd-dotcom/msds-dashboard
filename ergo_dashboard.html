@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard การยศาสตร์ รพ.สกลนคร ปีงบ 2569</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #f0f4f8;
+    color: #1a2332;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #1a3a6b 0%, #0d6efd 50%, #0dcaf0 100%);
+    color: white;
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+  }
+  .header-left { display: flex; align-items: center; gap: 18px; }
+  .header-icon {
+    width: 56px; height: 56px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+  }
+  .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .header h1 span { font-size: 14px; font-weight: 400; opacity: 0.85; display: block; }
+  .header-right { text-align: right; }
+  .badge-phase {
+    display: inline-block;
+    background: rgba(255,255,255,0.25);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 20px;
+    padding: 5px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+  }
+  .header-date { font-size: 13px; opacity: 0.8; }
+
+  /* SECTION TABS */
+  .tabs {
+    background: white;
+    padding: 0 40px;
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid #e2e8f0;
+    overflow-x: auto;
+  }
+  .tab {
+    padding: 14px 22px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #64748b;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .tab:hover { color: #0d6efd; }
+  .tab.active { color: #0d6efd; border-bottom-color: #0d6efd; font-weight: 600; }
+
+  /* CONTENT AREA */
+  .content { padding: 28px 40px; max-width: 1400px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* KPI GRID */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .kpi-card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border-left: 5px solid;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::after {
+    content: attr(data-icon);
+    position: absolute;
+    right: 14px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 36px;
+    opacity: 0.12;
+  }
+  .kpi-card.blue   { border-left-color: #0d6efd; }
+  .kpi-card.teal   { border-left-color: #0dcaf0; }
+  .kpi-card.green  { border-left-color: #198754; }
+  .kpi-card.orange { border-left-color: #fd7e14; }
+  .kpi-card.red    { border-left-color: #dc3545; }
+  .kpi-card.purple { border-left-color: #6f42c1; }
+
+  .kpi-label { font-size: 12px; color: #64748b; font-weight: 500; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 32px; font-weight: 700; line-height: 1; }
+  .kpi-card.blue   .kpi-value { color: #0d6efd; }
+  .kpi-card.teal   .kpi-value { color: #0aa6c7; }
+  .kpi-card.green  .kpi-value { color: #198754; }
+  .kpi-card.orange .kpi-value { color: #fd7e14; }
+  .kpi-card.red    .kpi-value { color: #dc3545; }
+  .kpi-card.purple .kpi-value { color: #6f42c1; }
+  .kpi-sub { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+
+  /* CHART CARDS */
+  .chart-grid { display: grid; gap: 20px; }
+  .chart-grid-2 { grid-template-columns: 1fr 1fr; }
+  .chart-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .card-title {
+    font-size: 15px; font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .chart-wrap { position: relative; }
+  .chart-wrap.h300 canvas { max-height: 300px; }
+  .chart-wrap.h350 canvas { max-height: 350px; }
+  .chart-wrap.h400 canvas { max-height: 400px; }
+  .chart-wrap.h500 canvas { max-height: 500px; }
+
+  /* RISK TABLE */
+  .risk-legend {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;
+  }
+  .risk-badge {
+    display: flex; align-items: center; gap: 6px;
+    background: #f8fafc; border-radius: 8px;
+    padding: 6px 12px; font-size: 13px;
+  }
+  .risk-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+  /* PROGRESS BARS */
+  .progress-list { display: flex; flex-direction: column; gap: 12px; }
+  .progress-item label {
+    display: flex; justify-content: space-between;
+    font-size: 13px; margin-bottom: 5px;
+    font-weight: 500;
+  }
+  .progress-bar { height: 10px; background: #f1f5f9; border-radius: 10px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 10px; transition: width 0.8s ease; }
+
+  /* DEPT TABLE */
+  .dept-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .dept-table th {
+    background: #f8fafc; padding: 10px 14px;
+    text-align: left; font-weight: 600;
+    color: #475569; border-bottom: 2px solid #e2e8f0;
+  }
+  .dept-table td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .dept-table tr:hover td { background: #fafbff; }
+  .count-bar {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .count-bar .mini-bar {
+    height: 8px; border-radius: 4px;
+    background: linear-gradient(90deg, #0d6efd, #0dcaf0);
+  }
+
+  /* TARGET GAUGE */
+  .gauge-wrap { text-align: center; padding: 10px 0; }
+  .gauge-label { font-size: 13px; color: #64748b; margin-top: 8px; }
+  .gauge-value { font-size: 28px; font-weight: 700; color: #0d6efd; }
+
+  /* COMPARISON TABLE */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .compare-table th {
+    background: #1a3a6b; color: white;
+    padding: 12px 16px; text-align: center;
+    font-weight: 600;
+  }
+  .compare-table td {
+    padding: 11px 16px; border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+  }
+  .compare-table tr:nth-child(even) td { background: #f8fafc; }
+  .compare-table td:first-child { text-align: left; font-weight: 500; }
+  .level-badge {
+    display: inline-block; padding: 3px 10px;
+    border-radius: 12px; font-size: 12px; font-weight: 600;
+  }
+  .level-green  { background: #d1fae5; color: #065f46; }
+  .level-yellow { background: #fef3c7; color: #92400e; }
+  .level-red    { background: #fee2e2; color: #991b1b; }
+  .level-gray   { background: #f1f5f9; color: #64748b; }
+
+  /* ALERTS */
+  .alert-box {
+    border-radius: 12px; padding: 14px 18px;
+    margin-bottom: 16px; display: flex; gap: 12px; align-items: flex-start;
+    font-size: 14px;
+  }
+  .alert-box.warning { background: #fff7ed; border-left: 4px solid #f97316; }
+  .alert-box.info    { background: #eff6ff; border-left: 4px solid #3b82f6; }
+  .alert-box.success { background: #f0fdf4; border-left: 4px solid #22c55e; }
+
+  /* FOOTER */
+  .footer {
+    text-align: center; padding: 20px;
+    font-size: 12px; color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 40px;
+  }
+
+  @media (max-width: 900px) {
+    .content { padding: 16px 20px; }
+    .chart-grid-2, .chart-grid-3 { grid-template-columns: 1fr; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .tabs { padding: 0 16px; }
+    .header { padding: 18px 20px; flex-direction: column; gap: 12px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🏥</div>
+    <div>
+      <h1>Dashboard การยศาสตร์ในบุคลากรที่ปฏิบัติงานกับคอมพิวเตอร์
+        <span>กลุ่มงานอาชีวเวชกรรม โรงพยาบาลสกลนคร | ปีงบประมาณ 2569</span>
+      </h1>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="badge-phase">📋 ระยะ: Pre-test</div>
+    <div class="header-date">📅 เก็บข้อมูล: 5–15 มิถุนายน 2569 &nbsp;|&nbsp; อัปเดต: 15 มิ.ย. 2569</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active" onclick="showSection('overview')">🏠 ภาพรวม</div>
+  <div class="tab" onclick="showSection('msds')">🦴 MSDs อาการปวด</div>
+  <div class="tab" onclick="showSection('rosa')">🪑 ROSA ความเสี่ยง</div>
+  <div class="tab" onclick="showSection('knowledge')">📚 ความรู้ & พฤติกรรม</div>
+  <div class="tab" onclick="showSection('dept')">🏢 รายหน่วยงาน</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- ========== OVERVIEW ========== -->
+  <div id="sec-overview" class="section active">
+    <div class="kpi-grid">
+      <div class="kpi-card blue" data-icon="👥">
+        <div class="kpi-label">ผู้ตอบแบบสอบถาม</div>
+        <div class="kpi-value">167</div>
+        <div class="kpi-sub">Pre-test (109) + Post (58)</div>
+      </div>
+      <div class="kpi-card teal" data-icon="🪑">
+        <div class="kpi-label">ประเมิน ROSA</div>
+        <div class="kpi-value">25</div>
+        <div class="kpi-sub">คน (กำลังดำเนินการ)</div>
+      </div>
+      <div class="kpi-card green" data-icon="🧠">
+        <div class="kpi-label">คะแนนความรู้ (Pre)</div>
+        <div class="kpi-value">8.27<small style="font-size:16px">/10</small></div>
+        <div class="kpi-sub">ระดับดี (≥80%)</div>
+      </div>
+      <div class="kpi-card orange" data-icon="🏃">
+        <div class="kpi-label">คะแนนพฤติกรรม (Pre)</div>
+        <div class="kpi-value">2.90<small style="font-size:16px">/5</small></div>
+        <div class="kpi-sub">ระดับปานกลาง (เป้า ≥3.41)</div>
+      </div>
+      <div class="kpi-card red" data-icon="😣">
+        <div class="kpi-label">มีอาการ MSDs สูงสุด</div>
+        <div class="kpi-value">90.8%</div>
+        <div class="kpi-sub">บริเวณไหล่</div>
+      </div>
+      <div class="kpi-card purple" data-icon="⚠️">
+        <div class="kpi-label">ROSA ≥5 (ต้องแก้ไข)</div>
+        <div class="kpi-value">76%</div>
+        <div class="kpi-sub">19 จาก 25 คน</div>
+      </div>
+    </div>
+
+    <div class="alert-box warning">
+      <span style="font-size:20px">⚠️</span>
+      <div><strong>ข้อค้นพบสำคัญ:</strong> บุคลากรมากกว่า 4 ใน 5 มีอาการ MSDs โดยไหล่ (90.8%) และคอ (84.4%) มีความชุกสูงสุด ในขณะที่พฤติกรรมการยศาสตร์อยู่ในระดับปานกลาง (2.90/5) ซึ่งยังต่ำกว่าเป้าหมายโครงการ (≥3.41)</div>
+    </div>
+
+    <div class="chart-grid chart-grid-2" style="margin-top:0">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#dc3545"></span>ความชุกอาการ MSDs ตามตำแหน่งร่างกาย (%)</div>
+        <div class="chart-wrap h350"><canvas id="chartOverviewMSDs"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#6f42c1"></span>ระดับความเสี่ยง ROSA (n=25)</div>
+        <div class="chart-wrap h350"><canvas id="chartOverviewROSA"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-grid chart-grid-2" style="margin-top:20px">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#198754"></span>ระดับความรู้ด้านการยศาสตร์ (Pre-test, n=109)</div>
+        <div class="chart-wrap h300"><canvas id="chartKnowledgeDist"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#fd7e14"></span>ระดับพฤติกรรมด้านการยศาสตร์ (Pre-test, n=109)</div>
+        <div class="chart-wrap h300"><canvas id="chartBehaviorTarget"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== MSDs ========== -->
+  <div id="sec-msds" class="section">
+    <div class="alert-box info">
+      <span style="font-size:20px">ℹ️</span>
+      <div>ข้อมูล MSDs จากแบบสอบถาม Nordic Musculoskeletal Questionnaire ดัดแปลง วัดความรุนแรง (NRS 0–4) และความถี่ของอาการ ในช่วง 1 เดือนที่ผ่านมา (n=167)</div>
+    </div>
+
+    <div class="chart-grid" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#dc3545"></span>ความชุกของอาการ MSDs จำแนกตามตำแหน่งร่างกาย และระดับความเสี่ยง</div>
+        <div class="chart-wrap h400"><canvas id="chartMSDsMain"></canvas></div>
+        <div class="risk-legend" style="margin-top:16px">
+          <div class="risk-badge"><div class="risk-dot" style="background:#dc3545"></div>สูงมาก (≥85%)</div>
+          <div class="risk-badge"><div class="risk-dot" style="background:#fd7e14"></div>สูง (75–84%)</div>
+          <div class="risk-badge"><div class="risk-dot" style="background:#ffc107"></div>ปานกลาง (50–74%)</div>
+          <div class="risk-badge"><div class="risk-dot" style="background:#198754"></div>ต่ำ (&lt;50%)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid chart-grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#fd7e14"></span>การกระจายระดับความรุนแรง (%) 10 ตำแหน่ง</div>
+        <div class="chart-wrap h400"><canvas id="chartMSDsSeverity"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#6f42c1"></span>ความถี่อาการปวด (%) 10 ตำแหน่ง</div>
+        <div class="chart-wrap h400"><canvas id="chartMSDsFreq"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-title"><span class="dot" style="background:#0d6efd"></span>สรุประดับความเสี่ยง MSDs ตามตำแหน่งร่างกาย</div>
+      <table class="compare-table">
+        <tr>
+          <th>ตำแหน่งร่างกาย</th>
+          <th>%มีอาการ</th>
+          <th>%เล็กน้อย</th>
+          <th>%ปานกลาง</th>
+          <th>%มาก–มากเกินทน</th>
+          <th>ระดับความเสี่ยง</th>
+        </tr>
+        <tr><td>🔴 ไหล่</td><td>90.8%</td><td>27.5%</td><td>35.9%</td><td>26.9%</td><td><span class="level-badge level-red">สูงมาก</span></td></tr>
+        <tr><td>🔴 คอ</td><td>84.4%</td><td>35.9%</td><td>33.5%</td><td>15.6%</td><td><span class="level-badge level-red">สูงมาก</span></td></tr>
+        <tr><td>🟠 หลังส่วนล่าง</td><td>81.7%</td><td>35.9%</td><td>28.1%</td><td>18.0%</td><td><span class="level-badge level-yellow">สูง</span></td></tr>
+        <tr><td>🟠 หลังส่วนบน</td><td>80.7%</td><td>30.5%</td><td>32.9%</td><td>17.4%</td><td><span class="level-badge level-yellow">สูง</span></td></tr>
+        <tr><td>🟡 มือและข้อมือ</td><td>77.1%</td><td>42.5%</td><td>25.1%</td><td>12.0%</td><td><span class="level-badge level-yellow">ปานกลาง</span></td></tr>
+        <tr><td>🟡 แขนท่อนล่าง</td><td>62.4%</td><td>35.9%</td><td>21.0%</td><td>5.5%</td><td><span class="level-badge level-yellow">ปานกลาง</span></td></tr>
+        <tr><td>🟡 สะโพก</td><td>59.6%</td><td>34.1%</td><td>20.4%</td><td>8.4%</td><td><span class="level-badge level-yellow">ปานกลาง</span></td></tr>
+        <tr><td>🟡 เท้าและข้อเท้า</td><td>57.8%</td><td>30.5%</td><td>21.0%</td><td>6.0%</td><td><span class="level-badge level-yellow">ปานกลาง</span></td></tr>
+        <tr><td>🟢 เข่า</td><td>50.5%</td><td>29.9%</td><td>18.0%</td><td>5.4%</td><td><span class="level-badge level-green">ต่ำ</span></td></tr>
+        <tr><td>🟢 น่อง</td><td>49.5%</td><td>35.3%</td><td>13.2%</td><td>4.2%</td><td><span class="level-badge level-green">ต่ำ</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== ROSA ========== -->
+  <div id="sec-rosa" class="section">
+    <div class="alert-box warning">
+      <span style="font-size:20px">🪑</span>
+      <div><strong>ROSA (Rapid Office Strain Assessment):</strong> คะแนน ≥5 = ต้องการการแก้ไข | คะแนน 7–8 = ต้องดำเนินการเร่งด่วน | ข้อมูลจากการประเมิน 25 คน (กำลังดำเนินการต่อ)</div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card green" data-icon="✅">
+        <div class="kpi-label">ปลอดภัย (1–2)</div>
+        <div class="kpi-value">1</div>
+        <div class="kpi-sub">4% ของผู้รับการประเมิน</div>
+      </div>
+      <div class="kpi-card blue" data-icon="🔍">
+        <div class="kpi-label">ควรตรวจสอบ (3–4)</div>
+        <div class="kpi-value">5</div>
+        <div class="kpi-sub">20% ของผู้รับการประเมิน</div>
+      </div>
+      <div class="kpi-card orange" data-icon="⚠️">
+        <div class="kpi-label">ต้องแก้ไข (5–6)</div>
+        <div class="kpi-value">17</div>
+        <div class="kpi-sub">68% ของผู้รับการประเมิน</div>
+      </div>
+      <div class="kpi-card red" data-icon="🚨">
+        <div class="kpi-label">เร่งด่วน (7–8)</div>
+        <div class="kpi-value">2</div>
+        <div class="kpi-sub">8% ของผู้รับการประเมิน</div>
+      </div>
+    </div>
+
+    <div class="chart-grid chart-grid-2">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#6f42c1"></span>การกระจายระดับความเสี่ยง ROSA (n=25)</div>
+        <div class="chart-wrap h350"><canvas id="chartROSADist"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#0d6efd"></span>คะแนน ROSA จำแนกตามหน่วยงาน</div>
+        <div class="chart-wrap h350"><canvas id="chartROSADept"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-title"><span class="dot" style="background:#dc3545"></span>รายชื่อผู้รับการประเมิน ROSA พร้อมคะแนนและระดับความเสี่ยง</div>
+      <table class="compare-table">
+        <tr>
+          <th>#</th><th>ชื่อ-สกุล</th><th>หน่วยงาน</th><th>คะแนน ROSA</th><th>ระดับ</th>
+        </tr>
+        <tr><td>1</td><td>นางนพัฐสุดา ปินตา</td><td>สุขภาพดิจิทัล</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>2</td><td>นายเอกกมล ไสยสนิท</td><td>สุขภาพดิจิทัล</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>3</td><td>นายอภิวัฒน์ ภูยิหวา</td><td>สุขภาพดิจิทัล</td><td>8</td><td><span class="level-badge level-red">เร่งด่วน</span></td></tr>
+        <tr><td>4</td><td>ชิษณุพงศ์ กุลด้วง</td><td>สุขภาพดิจิทัล</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>5</td><td>ธนวรรณ มณีวรร</td><td>สุขภาพดิจิทัล</td><td>3</td><td><span class="level-badge level-green">ควรตรวจสอบ</span></td></tr>
+        <tr><td>6</td><td>นส จารุนันท์ จันทร์ชัย</td><td>ศูนย์พัฒนาคุณภาพ HA</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>7</td><td>จันทร์แข ศิริชมพู</td><td>ศูนย์พัฒนาคุณภาพ HA</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>8</td><td>วารุณี ละราคี</td><td>ศูนย์พัฒนาคุณภาพ HA</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>9</td><td>กนกวรรณ เวทศิลป์</td><td>ศูนย์พัฒนาคุณภาพ HA</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>10</td><td>นางสาวทับทิม ศรีนุกูล</td><td>ยุทธศาสตร์ฯ</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>11</td><td>นายโยธิน ลาดศิลา</td><td>ยุทธศาสตร์ฯ</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>12</td><td>นางสาวเนตรชนก ธราพร</td><td>ยุทธศาสตร์ฯ</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>13</td><td>กฤษฎิ์วัชระ การุญ</td><td>ยุทธศาสตร์ฯ</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>14</td><td>อดิศักดิ์ สิงห์โต</td><td>ยุทธศาสตร์ฯ</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>15</td><td>สุพัตรา โททุมพล</td><td>บัญชี</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>16</td><td>วราพร รชรี</td><td>บัญชี</td><td>4</td><td><span class="level-badge level-green">ควรตรวจสอบ</span></td></tr>
+        <tr><td>17</td><td>กัญญาพร จันทนิสร์</td><td>บัญชี</td><td>8</td><td><span class="level-badge level-red">เร่งด่วน</span></td></tr>
+        <tr><td>18</td><td>สุภา รักภูเสน</td><td>บัญชี</td><td>2</td><td><span class="level-badge level-green">ปลอดภัย</span></td></tr>
+        <tr><td>19</td><td>น.ส.อัญชรีย์ ยามรัมย์</td><td>บัญชี</td><td>4</td><td><span class="level-badge level-green">ควรตรวจสอบ</span></td></tr>
+        <tr><td>20</td><td>นันท์ทิวา แสนภูวา</td><td>บัญชี</td><td>3</td><td><span class="level-badge level-green">ควรตรวจสอบ</span></td></tr>
+        <tr><td>21</td><td>วาสนา สกลธัฒน์</td><td>บัญชี</td><td>6</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>22</td><td>นายณฐพงศ์ ธรรมบุญ</td><td>บัญชี</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>23</td><td>นางกมลวัลย์ พรหมอุดม</td><td>IC</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>24</td><td>นางสาวอมรรัตน์ ฮองต้น</td><td>IC</td><td>5</td><td><span class="level-badge level-yellow">ต้องแก้ไข</span></td></tr>
+        <tr><td>25</td><td>น.ส.สุทธิดา แก้วทา</td><td>IC</td><td>4</td><td><span class="level-badge level-green">ควรตรวจสอบ</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ========== KNOWLEDGE & BEHAVIOR ========== -->
+  <div id="sec-knowledge" class="section">
+    <div class="alert-box success">
+      <span style="font-size:20px">🎯</span>
+      <div><strong>เป้าหมายโครงการ:</strong> บุคลากร ≥80% มีค่าเฉลี่ยพฤติกรรมด้านการยศาสตร์ ≥3.41 (ระดับดี–ดีมาก) ภายหลังดำเนินมาตรการ</div>
+    </div>
+
+    <div class="chart-grid chart-grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#198754"></span>เปรียบเทียบ Pre–Post: ความรู้ & พฤติกรรม</div>
+        <div class="chart-wrap h350"><canvas id="chartPrePost"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#fd7e14"></span>ระดับพฤติกรรมรายข้อ (Pre-test เฉลี่ย)</div>
+        <div class="chart-wrap h350"><canvas id="chartBehaviorItems"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#0d6efd"></span>ตารางเปรียบเทียบผลลัพธ์ Pre-test vs Post-test</div>
+      <table class="compare-table">
+        <tr>
+          <th>ตัวชี้วัด</th>
+          <th>Pre-test<br>(มิ.ย. 2569)</th>
+          <th>ระดับ Pre</th>
+          <th>Post-test<br>(รอผล)</th>
+          <th>ระดับ Post</th>
+          <th>เป้าหมาย</th>
+        </tr>
+        <tr>
+          <td>คะแนนความรู้เฉลี่ย (10 คะแนน)</td>
+          <td>8.27</td>
+          <td><span class="level-badge level-green">ดี</span></td>
+          <td>—</td>
+          <td><span class="level-badge level-gray">รอผล</span></td>
+          <td>≥8/10</td>
+        </tr>
+        <tr>
+          <td>คะแนนพฤติกรรมเฉลี่ย (5 คะแนน)</td>
+          <td>2.90</td>
+          <td><span class="level-badge level-yellow">ปานกลาง</span></td>
+          <td>—</td>
+          <td><span class="level-badge level-gray">รอผล</span></td>
+          <td>≥3.41</td>
+        </tr>
+        <tr>
+          <td>%บุคลากรที่มีพฤติกรรมระดับดี-ดีมาก</td>
+          <td>คำนวณจากข้อมูล</td>
+          <td><span class="level-badge level-yellow">ปานกลาง</span></td>
+          <td>—</td>
+          <td><span class="level-badge level-gray">รอผล</span></td>
+          <td>≥80%</td>
+        </tr>
+        <tr>
+          <td>%บุคลากรมีอาการ MSDs (ไหล่)</td>
+          <td>90.8%</td>
+          <td><span class="level-badge level-red">สูงมาก</span></td>
+          <td>—</td>
+          <td><span class="level-badge level-gray">รอผล</span></td>
+          <td>ลดลง</td>
+        </tr>
+        <tr>
+          <td>%บุคลากรมีอาการ MSDs (คอ)</td>
+          <td>84.4%</td>
+          <td><span class="level-badge level-red">สูงมาก</span></td>
+          <td>—</td>
+          <td><span class="level-badge level-gray">รอผล</span></td>
+          <td>ลดลง</td>
+        </tr>
+        <tr>
+          <td>%ROSA score ≥5 (ต้องแก้ไข)</td>
+          <td>76%</td>
+          <td><span class="level-badge level-red">สูง</span></td>
+          <td>—</td>
+          <td><span class="level-badge level-gray">รอผล</span></td>
+          <td>ลดลง</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:20px">
+      <div class="card-title"><span class="dot" style="background:#6f42c1"></span>ความรู้รายข้อ: % ตอบถูก (Pre-test, n=109)</div>
+      <div class="progress-list" id="knowledge-bars"></div>
+    </div>
+  </div>
+
+  <!-- ========== DEPT ========== -->
+  <div id="sec-dept" class="section">
+    <div class="chart-grid chart-grid-2" style="margin-bottom:20px">
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#0d6efd"></span>จำนวนผู้ตอบแบบสอบถาม จำแนกตามหน่วยงาน</div>
+        <div class="chart-wrap h400"><canvas id="chartDeptBar"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="dot" style="background:#6f42c1"></span>สัดส่วนรายหน่วยงาน (%)</div>
+        <div class="chart-wrap h400"><canvas id="chartDeptPie"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title"><span class="dot" style="background:#198754"></span>ตารางสรุปรายหน่วยงาน</div>
+      <table class="dept-table">
+        <tr>
+          <th>#</th><th>หน่วยงาน</th><th>จำนวน (คน)</th><th>ร้อยละ</th><th>สัดส่วน</th>
+        </tr>
+        <tr><td>1</td><td>เวชระเบียนและข้อมูลทางการแพทย์</td><td>33</td><td>19.8%</td><td><div class="count-bar"><div class="mini-bar" style="width:132px"></div>33</div></td></tr>
+        <tr><td>2</td><td>ประกันสุขภาพ (รวมจัดเก็บรายได้)</td><td>26</td><td>15.6%</td><td><div class="count-bar"><div class="mini-bar" style="width:104px"></div>26</div></td></tr>
+        <tr><td>3</td><td>พัสดุ</td><td>22</td><td>13.2%</td><td><div class="count-bar"><div class="mini-bar" style="width:88px"></div>22</div></td></tr>
+        <tr><td>4</td><td>บริหารทั่วไป</td><td>20</td><td>12.0%</td><td><div class="count-bar"><div class="mini-bar" style="width:80px"></div>20</div></td></tr>
+        <tr><td>5</td><td>เทคโนโลยีสารสนเทศ</td><td>17</td><td>10.2%</td><td><div class="count-bar"><div class="mini-bar" style="width:68px"></div>17</div></td></tr>
+        <tr><td>6</td><td>การเงิน</td><td>9</td><td>5.4%</td><td><div class="count-bar"><div class="mini-bar" style="width:36px"></div>9</div></td></tr>
+        <tr><td>7</td><td>บัญชี</td><td>8</td><td>4.8%</td><td><div class="count-bar"><div class="mini-bar" style="width:32px"></div>8</div></td></tr>
+        <tr><td>8</td><td>ทรัพยากรบุคคล (HR)</td><td>8</td><td>4.8%</td><td><div class="count-bar"><div class="mini-bar" style="width:32px"></div>8</div></td></tr>
+        <tr><td>9</td><td>พัฒนาทรัพยากรบุคคล (HRD)</td><td>6</td><td>3.6%</td><td><div class="count-bar"><div class="mini-bar" style="width:24px"></div>6</div></td></tr>
+        <tr><td>10</td><td>สุขภาพดิจิทัล</td><td>6</td><td>3.6%</td><td><div class="count-bar"><div class="mini-bar" style="width:24px"></div>6</div></td></tr>
+        <tr><td>11</td><td>ยุทธศาสตร์และแผนงานโครงการ</td><td>5</td><td>3.0%</td><td><div class="count-bar"><div class="mini-bar" style="width:20px"></div>5</div></td></tr>
+        <tr><td>12</td><td>ศูนย์พัฒนาคุณภาพ (HA)</td><td>4</td><td>2.4%</td><td><div class="count-bar"><div class="mini-bar" style="width:16px"></div>4</div></td></tr>
+        <tr><td>13</td><td>IC (ควบคุมการติดเชื้อ)</td><td>3</td><td>1.8%</td><td><div class="count-bar"><div class="mini-bar" style="width:12px"></div>3</div></td></tr>
+        <tr style="font-weight:700; background:#f8fafc">
+          <td colspan="2">รวม</td><td>167</td><td>100%</td><td></td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<div class="footer">
+  กลุ่มงานอาชีวเวชกรรม โรงพยาบาลสกลนคร | โครงการเฝ้าระวังและป้องกัน MSDs จากการทำงานด้วยคอมพิวเตอร์ | ปีงบประมาณ 2569
+</div>
+
+<script>
+// TABS
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  event.target.classList.add('active');
+  initCharts();
+}
+
+// CHART DATA
+const bodyParts = ['ไหล่','คอ','หลังส่วนล่าง','หลังส่วนบน','มือ/ข้อมือ','แขนท่อนล่าง','สะโพก','เท้า/ข้อเท้า','เข่า','น่อง'];
+const prevalence = [90.8, 84.4, 81.7, 80.7, 77.1, 62.4, 59.6, 57.8, 50.5, 49.5];
+const sevNone    = [9.6,  15.0, 18.0, 19.2, 37.1, 20.4, 37.1, 42.5, 46.7, 47.3];
+const sevMild    = [27.5, 35.9, 35.9, 30.5, 35.9, 42.5, 34.1, 30.5, 29.9, 35.3];
+const sevMod     = [35.9, 33.5, 28.1, 32.9, 21.0, 25.1, 20.4, 21.0, 18.0, 13.2];
+const sevHigh    = [26.3, 15.0, 16.8, 16.2, 6.0,  12.0, 8.4,  6.0,  5.4,  4.2];
+const sevMax     = [0.6,  0.6,  1.2,  1.2,  0.0,  0.0,  2.4,  0.0,  0.6,  0.0];
+
+const freqNone  = [17.4, 12.6, 26.9, 28.7, 45.5, 28.7, 40.7, 48.5, 52.1, 44.9];
+const freq12    = [49.7, 43.7, 40.1, 45.5, 36.5, 46.7, 40.1, 35.9, 34.7, 40.7];
+const freq34    = [18.6, 26.9, 17.4, 16.2, 14.4, 16.2, 12.0, 10.8, 9.0,  8.4];
+const freq1d    = [8.4,  8.4,  7.2,  6.0,  1.8,  4.8,  3.6,  3.6,  3.6,  4.8];
+const freqMany  = [6.0,  8.4,  6.6,  5.4,  1.8,  3.6,  3.6,  1.2,  0.6,  1.2];
+
+// COLORS
+const colorPrevalence = prevalence.map(v =>
+  v >= 85 ? '#dc3545' : v >= 75 ? '#fd7e14' : v >= 50 ? '#ffc107' : '#198754'
+);
+let chartsInit = false;
+
+function initCharts() {
+  if (chartsInit) return;
+  chartsInit = true;
+
+  const defaults = { font: { family: "'Sarabun', sans-serif", size: 12 } };
+  Chart.defaults.font = defaults.font;
+
+  // --- OVERVIEW: MSDs horizontal ---
+  new Chart(document.getElementById('chartOverviewMSDs'), {
+    type: 'bar',
+    data: {
+      labels: bodyParts,
+      datasets: [{
+        label: '% มีอาการ',
+        data: prevalence,
+        backgroundColor: colorPrevalence,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => c.formattedValue + '%' } }
+      },
+      scales: {
+        x: { max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- OVERVIEW: ROSA donut ---
+  new Chart(document.getElementById('chartOverviewROSA'), {
+    type: 'doughnut',
+    data: {
+      labels: ['ปลอดภัย (1–2)', 'ควรตรวจสอบ (3–4)', 'ต้องแก้ไข (5–6)', 'เร่งด่วน (7–8)'],
+      datasets: [{
+        data: [1, 5, 17, 2],
+        backgroundColor: ['#198754','#0d6efd','#fd7e14','#dc3545'],
+        borderWidth: 3,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } },
+        tooltip: { callbacks: { label: c => c.label + ': ' + c.raw + ' คน (' + Math.round(c.raw/25*100) + '%)' } }
+      }
+    }
+  });
+
+  // --- OVERVIEW: Knowledge distribution bar ---
+  new Chart(document.getElementById('chartKnowledgeDist'), {
+    type: 'bar',
+    data: {
+      labels: ['ควรปรับปรุง\n(≤5/10)', 'ปานกลาง\n(6–7/10)', 'ดี\n(8–10/10)'],
+      datasets: [{
+        label: 'จำนวนคน',
+        data: [5, 20, 84],
+        backgroundColor: ['#dc3545','#fd7e14','#198754'],
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { title: { display: true, text: 'จำนวน (คน)' }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- OVERVIEW: Behavior vs target ---
+  new Chart(document.getElementById('chartBehaviorTarget'), {
+    type: 'bar',
+    data: {
+      labels: ['พฤติกรรม Pre-test', 'เป้าหมาย Post-test'],
+      datasets: [{
+        label: 'คะแนนเฉลี่ย',
+        data: [2.90, 3.41],
+        backgroundColor: ['#fd7e14','rgba(25,135,84,0.25)'],
+        borderColor: ['#fd7e14','#198754'],
+        borderWidth: 2,
+        borderRadius: 10,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { min: 0, max: 5, title: { display: true, text: 'คะแนนเฉลี่ย (1–5)' }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- MSDs: Main chart ---
+  new Chart(document.getElementById('chartMSDsMain'), {
+    type: 'bar',
+    data: {
+      labels: bodyParts,
+      datasets: [{
+        label: '% มีอาการ (รวม)',
+        data: prevalence,
+        backgroundColor: colorPrevalence,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => c.formattedValue + '%' } }
+      },
+      scales: {
+        x: { max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- MSDs: Severity stacked ---
+  new Chart(document.getElementById('chartMSDsSeverity'), {
+    type: 'bar',
+    data: {
+      labels: bodyParts,
+      datasets: [
+        { label: 'ไม่มีอาการ', data: sevNone, backgroundColor: '#e2e8f0', borderRadius: 0 },
+        { label: 'เล็กน้อย',   data: sevMild, backgroundColor: '#93c5fd', borderRadius: 0 },
+        { label: 'ปานกลาง',   data: sevMod,  backgroundColor: '#fbbf24', borderRadius: 0 },
+        { label: 'มาก',       data: sevHigh, backgroundColor: '#f97316', borderRadius: 0 },
+        { label: 'มากเกินทน', data: sevMax,  backgroundColor: '#dc3545', borderRadius: 0 },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.formattedValue + '%' } } },
+      scales: {
+        x: { stacked: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+        y: { stacked: true, grid: { display: false } }
+      }
+    }
+  });
+
+  // --- MSDs: Frequency stacked ---
+  new Chart(document.getElementById('chartMSDsFreq'), {
+    type: 'bar',
+    data: {
+      labels: bodyParts,
+      datasets: [
+        { label: 'ไม่มีอาการ',         data: freqNone, backgroundColor: '#e2e8f0' },
+        { label: '1–2 ครั้ง/สัปดาห์', data: freq12,   backgroundColor: '#86efac' },
+        { label: '3–4 ครั้ง/สัปดาห์', data: freq34,   backgroundColor: '#fbbf24' },
+        { label: '1 ครั้ง/วัน',        data: freq1d,   backgroundColor: '#f97316' },
+        { label: 'หลายครั้ง/วัน',       data: freqMany, backgroundColor: '#dc3545' },
+      ]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, tooltip: { callbacks: { label: c => c.dataset.label + ': ' + c.formattedValue + '%' } } },
+      scales: {
+        x: { stacked: true, max: 100, ticks: { callback: v => v + '%' }, grid: { color: '#f1f5f9' } },
+        y: { stacked: true, grid: { display: false } }
+      }
+    }
+  });
+
+  // --- ROSA: Distribution donut ---
+  new Chart(document.getElementById('chartROSADist'), {
+    type: 'doughnut',
+    data: {
+      labels: ['ปลอดภัย (1–2): 1 คน','ควรตรวจสอบ (3–4): 5 คน','ต้องแก้ไข (5–6): 17 คน','เร่งด่วน (7–8): 2 คน'],
+      datasets: [{
+        data: [1, 5, 17, 2],
+        backgroundColor: ['#198754','#0d6efd','#fd7e14','#dc3545'],
+        borderWidth: 3,
+        borderColor: '#fff',
+        hoverOffset: 8
+      }]
+    },
+    options: {
+      cutout: '55%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, font: { size: 12 } } },
+        tooltip: { callbacks: { label: c => Math.round(c.raw/25*100) + '% (' + c.raw + ' คน)' } }
+      }
+    }
+  });
+
+  // --- ROSA: By dept ---
+  const deptROSA = ['สุขภาพดิจิทัล','HA','ยุทธศาสตร์ฯ','บัญชี','IC'];
+  const rosaScores = [
+    [5,5,8,5,3], [5,5,6,6], [6,5,6,5,6], [6,4,8,2,4,3,6,5], [5,5,4]
+  ];
+  const avgROSA = rosaScores.map(arr => +(arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1));
+  new Chart(document.getElementById('chartROSADept'), {
+    type: 'bar',
+    data: {
+      labels: deptROSA,
+      datasets: [{
+        label: 'คะแนน ROSA เฉลี่ย',
+        data: avgROSA,
+        backgroundColor: avgROSA.map(v => v >= 7 ? '#dc3545' : v >= 5 ? '#fd7e14' : v >= 3 ? '#0d6efd' : '#198754'),
+        borderRadius: 8
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { display: false },
+        annotation: {}
+      },
+      scales: {
+        y: { min: 0, max: 8, title: { display: true, text: 'คะแนน ROSA เฉลี่ย' }, grid: { color: '#f1f5f9' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- Knowledge: Pre-Post radar ---
+  new Chart(document.getElementById('chartPrePost'), {
+    type: 'radar',
+    data: {
+      labels: ['ความรู้\n(÷10×5)', 'พฤติกรรม', 'ROSA\n(เร่งด่วน↓)', 'MSDs ไหล่\n(ลดลง↑)', 'MSDs คอ\n(ลดลง↑)'],
+      datasets: [
+        {
+          label: 'Pre-test',
+          data: [4.14, 2.90, 2, 0.9, 0.8],
+          borderColor: '#0d6efd',
+          backgroundColor: 'rgba(13,110,253,0.1)',
+          pointBackgroundColor: '#0d6efd',
+          borderWidth: 2
+        },
+        {
+          label: 'เป้าหมาย Post',
+          data: [4.5, 3.41, 5, 5, 5],
+          borderColor: '#198754',
+          backgroundColor: 'rgba(25,135,84,0.08)',
+          borderDash: [5,5],
+          pointBackgroundColor: '#198754',
+          borderWidth: 2
+        }
+      ]
+    },
+    options: {
+      plugins: { legend: { position: 'bottom' } },
+      scales: { r: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: '#e2e8f0' } } }
+    }
+  });
+
+  // --- Behavior items bar ---
+  new Chart(document.getElementById('chartBehaviorItems'), {
+    type: 'bar',
+    data: {
+      labels: ['ปรับเก้าอี้','จัดจอ','วางเท้า','พิงพนักพิง','ไม่นั่งนาน','Microbreak','ยืดเหยียด','ปรับแป้น+เมาส์','ปรับท่าทาง','ใช้วัสดุทดแทน'],
+      datasets: [{
+        label: 'คะแนนเฉลี่ย',
+        data: [2.1, 2.3, 3.2, 2.7, 2.8, 2.5, 2.3, 2.9, 3.5, 2.2],
+        backgroundColor: function(ctx) {
+          const v = ctx.dataset.data[ctx.dataIndex];
+          return v >= 3.41 ? '#198754' : v >= 2.61 ? '#fd7e14' : '#dc3545';
+        },
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => 'เฉลี่ย: ' + c.formattedValue + '/5' } }
+      },
+      scales: {
+        x: { min: 0, max: 5, ticks: { stepSize: 1 }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- Dept: Bar ---
+  const deptNames = ['เวชระเบียน','ประกันสุขภาพ','พัสดุ','บริหารทั่วไป','IT','การเงิน','บัญชี','HR','HRD','ดิจิทัล','ยุทธศาสตร์','HA','IC'];
+  const deptCounts = [33, 26, 22, 20, 17, 9, 8, 8, 6, 6, 5, 4, 3];
+  new Chart(document.getElementById('chartDeptBar'), {
+    type: 'bar',
+    data: {
+      labels: deptNames,
+      datasets: [{
+        label: 'จำนวนบุคลากร',
+        data: deptCounts,
+        backgroundColor: 'rgba(13,110,253,0.75)',
+        borderColor: '#0d6efd',
+        borderWidth: 1,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'จำนวนคน' }, grid: { color: '#f1f5f9' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // --- Dept: Pie ---
+  const deptColors = ['#0d6efd','#6610f2','#6f42c1','#d63384','#dc3545','#fd7e14','#ffc107','#198754','#20c997','#0dcaf0','#4361ee','#7209b7','#f72585'];
+  new Chart(document.getElementById('chartDeptPie'), {
+    type: 'pie',
+    data: {
+      labels: deptNames,
+      datasets: [{
+        data: deptCounts,
+        backgroundColor: deptColors,
+        borderWidth: 2,
+        borderColor: '#fff'
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 10, usePointStyle: true, font: { size: 11 } } },
+        tooltip: { callbacks: { label: c => c.label + ': ' + c.raw + ' คน (' + (c.raw/167*100).toFixed(1) + '%)' } }
+      }
+    }
+  });
+
+  // --- Knowledge bars ---
+  const knItems = [
+    'ขอบบนสุดของจอควรอยู่ระดับสายตา', 'ระยะห่างจอ 50–70 ซม.',
+    'นั่งต่อเนื่อง >1 ชม. เพิ่มความเสี่ยง MSDs', 'แป้นพิมพ์/เมาส์ ข้อศอก 90°',
+    'วางเท้าราบกับพื้น', 'เก้าอี้มี Lumbar support',
+    'Stretching 2 รอบ/วัน', 'Microbreak 5 นาที ทุก 1 ชม.',
+    'วัสดุทดแทนต้นทุนต่ำใช้ได้', 'ต้องจัดสถานีงานแม้ไม่ปวด'
+  ];
+  const knPct = [88, 93, 91, 85, 94, 97, 90, 72, 95, 69];
+  const kContainer = document.getElementById('knowledge-bars');
+  knItems.forEach((item, i) => {
+    const color = knPct[i] >= 80 ? '#198754' : knPct[i] >= 60 ? '#fd7e14' : '#dc3545';
+    kContainer.innerHTML += `
+      <div class="progress-item">
+        <label><span>${i+1}. ${item}</span><span style="color:${color};font-weight:700">${knPct[i]}%</span></label>
+        <div class="progress-bar"><div class="progress-fill" style="width:${knPct[i]}%;background:${color}"></div></div>
+      </div>`;
+  });
+}
+
+// Init on load
+window.addEventListener('load', initCharts);
+</script>
+</body>
+</html>
