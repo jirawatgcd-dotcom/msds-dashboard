@@ -223,6 +223,18 @@
   .alert-box.info    { background: #eff6ff; border-left: 4px solid #3b82f6; }
   .alert-box.success { background: #f0fdf4; border-left: 4px solid #22c55e; }
 
+  /* BODY MAP */
+  .bm-spot { cursor: pointer; transition: filter 0.18s, stroke-width 0.18s; }
+  .bm-spot:hover { filter: brightness(1.18) drop-shadow(0 0 4px rgba(0,0,0,0.3)); }
+  .bm-spot.bm-active { filter: brightness(1.1) drop-shadow(0 0 7px rgba(0,0,0,0.45)); stroke-width: 3 !important; }
+  #bmDetail { background:#f8fafc; border-radius:12px; padding:16px; margin-bottom:14px; min-height:172px; border:1.5px solid #e2e8f0; transition: all 0.2s; }
+  .bm-bar-wrap { height:7px; background:#f1f5f9; border-radius:4px; overflow:hidden; margin-top:2px; }
+  .bm-bar-fill { height:100%; border-radius:4px; transition: width 0.4s ease; }
+  .bm-rank-row { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .bm-rank-label { font-size:12px; color:#374151; min-width:90px; }
+  .bm-rank-bar-bg { flex:1; height:10px; background:#f1f5f9; border-radius:5px; overflow:hidden; }
+  .bm-rank-bar-fill { height:100%; border-radius:5px; }
+  .bm-rank-pct { font-size:12px; font-weight:700; min-width:38px; text-align:right; }
   /* FOOTER */
   .footer {
     text-align: center; padding: 20px;
@@ -339,6 +351,104 @@
       <span style="font-size:20px">ℹ️</span>
       <div>ข้อมูล MSDs จากแบบสอบถาม Nordic Musculoskeletal Questionnaire ดัดแปลง วัดความรุนแรง (NRS 0–4) และความถี่ของอาการ ในช่วง 1 เดือนที่ผ่านมา (n=167)</div>
     </div>
+
+    <!-- BODY MAP CARD -->
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title"><span class="dot" style="background:#dc3545"></span>Body Map — แผนที่อาการ MSDs จำแนกตำแหน่งร่างกาย (n=167)</div>
+      <div style="display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start;">
+
+        <!-- SVG Body Map -->
+        <div style="flex:0 0 auto; text-align:center;">
+          <div style="font-size:12px; color:#64748b; margin-bottom:6px;">💡 คลิกที่ตำแหน่งเพื่อดูรายละเอียด</div>
+          <div style="position:relative; display:inline-block;">
+            <svg id="bodyMap" viewBox="0 0 300 492" width="220" height="360" xmlns="http://www.w3.org/2000/svg">
+              <!-- SILHOUETTE BASE -->
+              <ellipse cx="150" cy="42" rx="32" ry="38" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="139" y="77" width="22" height="24" rx="3" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <polygon points="83,99 217,99 208,136 92,136" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="103" y="134" width="94" height="72" rx="4" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <polygon points="103,204 197,204 192,270 108,270" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="71" y="105" width="24" height="80" rx="11" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="205" y="105" width="24" height="80" rx="11" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="66" y="186" width="21" height="73" rx="9" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="213" y="186" width="21" height="73" rx="9" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <ellipse cx="77" cy="274" rx="18" ry="15" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <ellipse cx="223" cy="274" rx="18" ry="15" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="107" y="268" width="35" height="70" rx="13" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="158" y="268" width="35" height="70" rx="13" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <ellipse cx="124" cy="346" rx="18" ry="14" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <ellipse cx="176" cy="346" rx="18" ry="14" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="110" y="358" width="28" height="67" rx="10" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <rect x="162" y="358" width="28" height="67" rx="10" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <ellipse cx="120" cy="438" rx="26" ry="13" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+              <ellipse cx="180" cy="438" rx="26" ry="13" fill="#dde3ea" stroke="#b0bec5" stroke-width="1.5"/>
+
+              <!-- HOTSPOTS: colored based on risk level -->
+              <!-- คอ 84.4% Red -->
+              <ellipse class="bm-spot" data-id="neck" cx="150" cy="89" rx="20" ry="14" fill="rgba(220,53,69,0.70)" stroke="#dc3545" stroke-width="2"/>
+              <!-- ไหล่ 90.8% Deep Red -->
+              <ellipse class="bm-spot" data-id="shoulder" cx="94" cy="118" rx="26" ry="18" fill="rgba(180,20,40,0.78)" stroke="#b01428" stroke-width="2"/>
+              <ellipse class="bm-spot" data-id="shoulder" cx="206" cy="118" rx="26" ry="18" fill="rgba(180,20,40,0.78)" stroke="#b01428" stroke-width="2"/>
+              <!-- หลังส่วนบน 80.7% Orange -->
+              <ellipse class="bm-spot" data-id="upperback" cx="150" cy="169" rx="42" ry="28" fill="rgba(253,126,20,0.62)" stroke="#fd7e14" stroke-width="2"/>
+              <!-- หลังส่วนล่าง 81.7% Orange -->
+              <ellipse class="bm-spot" data-id="lowerback" cx="150" cy="233" rx="40" ry="26" fill="rgba(253,126,20,0.65)" stroke="#fd7e14" stroke-width="2"/>
+              <!-- มือ/ข้อมือ 77.1% Orange -->
+              <ellipse class="bm-spot" data-id="wrist" cx="77" cy="274" rx="18" ry="16" fill="rgba(253,126,20,0.68)" stroke="#fd7e14" stroke-width="2"/>
+              <ellipse class="bm-spot" data-id="wrist" cx="223" cy="274" rx="18" ry="16" fill="rgba(253,126,20,0.68)" stroke="#fd7e14" stroke-width="2"/>
+              <!-- แขนท่อนล่าง 62.4% Yellow -->
+              <ellipse class="bm-spot" data-id="forearm" cx="77" cy="222" rx="15" ry="32" fill="rgba(228,160,0,0.68)" stroke="#e4a000" stroke-width="2"/>
+              <ellipse class="bm-spot" data-id="forearm" cx="223" cy="222" rx="15" ry="32" fill="rgba(228,160,0,0.68)" stroke="#e4a000" stroke-width="2"/>
+              <!-- สะโพก 59.6% Yellow -->
+              <ellipse class="bm-spot" data-id="hip" cx="150" cy="266" rx="50" ry="16" fill="rgba(228,160,0,0.62)" stroke="#e4a000" stroke-width="2"/>
+              <!-- เท้า/ข้อเท้า 57.8% Yellow -->
+              <ellipse class="bm-spot" data-id="foot" cx="120" cy="438" rx="26" ry="14" fill="rgba(228,160,0,0.65)" stroke="#e4a000" stroke-width="2"/>
+              <ellipse class="bm-spot" data-id="foot" cx="180" cy="438" rx="26" ry="14" fill="rgba(228,160,0,0.65)" stroke="#e4a000" stroke-width="2"/>
+              <!-- เข่า 50.5% Light Yellow -->
+              <ellipse class="bm-spot" data-id="knee" cx="124" cy="346" rx="18" ry="14" fill="rgba(200,140,10,0.62)" stroke="#c88c0a" stroke-width="1.8"/>
+              <ellipse class="bm-spot" data-id="knee" cx="176" cy="346" rx="18" ry="14" fill="rgba(200,140,10,0.62)" stroke="#c88c0a" stroke-width="1.8"/>
+              <!-- น่อง 49.5% Light Yellow -->
+              <ellipse class="bm-spot" data-id="calf" cx="124" cy="391" rx="15" ry="28" fill="rgba(200,140,10,0.55)" stroke="#c88c0a" stroke-width="1.5"/>
+              <ellipse class="bm-spot" data-id="calf" cx="176" cy="391" rx="15" ry="28" fill="rgba(200,140,10,0.55)" stroke="#c88c0a" stroke-width="1.5"/>
+            </svg>
+            <!-- Floating tooltip -->
+            <div id="bmTooltip" style="display:none; position:absolute; background:rgba(15,23,42,0.88); color:#fff; padding:5px 10px; border-radius:8px; font-size:12px; pointer-events:none; white-space:nowrap; z-index:20; backdrop-filter:blur(4px);"></div>
+          </div>
+        </div>
+
+        <!-- Detail Panel -->
+        <div style="flex:0 0 210px; min-width:180px;">
+          <div id="bmDetail">
+            <div style="text-align:center; color:#94a3b8; padding:24px 10px 20px;">
+              <div style="font-size:34px;">👆</div>
+              <div style="font-size:13px; margin-top:8px; line-height:1.6;">คลิกที่ตำแหน่งบนแผนที่<br>เพื่อดูรายละเอียด</div>
+            </div>
+          </div>
+          <!-- Legend -->
+          <div style="font-size:12px; font-weight:600; color:#475569; margin-bottom:8px; margin-top:4px;">🎨 ระดับความชุก MSDs</div>
+          <div style="display:flex; flex-direction:column; gap:6px; font-size:12px;">
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:26px;height:14px;border-radius:4px;background:rgba(180,20,40,0.78);border:1.5px solid #b01428;flex-shrink:0"></div><span>🔴 ≥85% สูงมาก — แก้ไขเร่งด่วน</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:26px;height:14px;border-radius:4px;background:rgba(220,53,69,0.70);border:1.5px solid #dc3545;flex-shrink:0"></div><span>🟠 75–84% สูง — ให้ความสำคัญ</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:26px;height:14px;border-radius:4px;background:rgba(228,160,0,0.68);border:1.5px solid #e4a000;flex-shrink:0"></div><span>🟡 50–74% ปานกลาง — ติดตาม</span></div>
+            <div style="display:flex; align-items:center; gap:8px;"><div style="width:26px;height:14px;border-radius:4px;background:rgba(200,140,10,0.55);border:1.5px solid #c88c0a;flex-shrink:0"></div><span>🟤 &lt;50% ต่ำ — เฝ้าระวัง</span></div>
+          </div>
+        </div>
+
+        <!-- Ranked List -->
+        <div style="flex:1; min-width:200px;">
+          <div style="font-size:12px; font-weight:600; color:#475569; margin-bottom:10px;">📊 ความชุก MSDs ทุกตำแหน่ง (เรียงลำดับ)</div>
+          <div id="bmRankList">
+            <!-- generated by JS -->
+          </div>
+          <div style="margin-top:14px; padding:10px 12px; background:#fee2e2; border-radius:10px; font-size:12px;">
+            <div style="font-weight:700; color:#991b1b; margin-bottom:4px;">⚠️ ข้อสรุปสำหรับผู้บริหาร</div>
+            <div style="color:#7f1d1d; line-height:1.6;">บุคลากรมีอาการ MSDs <strong>อย่างน้อย 1 ตำแหน่ง ~95%</strong> ตำแหน่งเสี่ยงสูงสุดคือ <strong>ไหล่ และคอ</strong> ซึ่งต้องได้รับการแก้ไขเร่งด่วน</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- END BODY MAP -->
 
     <div class="chart-grid" style="margin-bottom:20px">
       <div class="card">
@@ -972,8 +1082,106 @@ function initCharts() {
   });
 }
 
+// ============ BODY MAP ============
+const bmData = {
+  shoulder:  { name:'ไหล่', pct:90.8, level:'สูงมาก', color:'#b01428', none:9.6,  mild:27.5, mod:36.5, high:25.1, max:1.2 },
+  neck:      { name:'คอ',   pct:84.4, level:'สูงมาก', color:'#dc3545', none:15.6, mild:36.5, mod:30.5, high:17.4, max:0.0 },
+  lowerback: { name:'หลังส่วนล่าง', pct:81.7, level:'สูง', color:'#fd7e14', none:18.0, mild:35.3, mod:28.1, high:17.4, max:1.2 },
+  upperback: { name:'หลังส่วนบน',   pct:80.7, level:'สูง', color:'#fd7e14', none:19.2, mild:31.1, mod:32.9, high:15.6, max:1.2 },
+  wrist:     { name:'มือและข้อมือ', pct:77.1, level:'สูง', color:'#fd7e14', none:22.8, mild:41.9, mod:25.1, high:10.2, max:0.0 },
+  forearm:   { name:'แขนท่อนล่าง', pct:62.4, level:'ปานกลาง', color:'#e4a000', none:37.1, mild:36.5, mod:20.4, high:6.0,  max:0.0 },
+  hip:       { name:'สะโพก',        pct:59.6, level:'ปานกลาง', color:'#e4a000', none:40.1, mild:31.7, mod:21.6, high:6.0,  max:0.6 },
+  foot:      { name:'เท้าและข้อเท้า', pct:57.8, level:'ปานกลาง', color:'#e4a000', none:42.5, mild:31.1, mod:20.4, high:6.0,  max:0.0 },
+  knee:      { name:'เข่า',          pct:50.5, level:'ต่ำ', color:'#c88c0a', none:49.7, mild:30.5, mod:15.6, high:4.2,  max:0.0 },
+  calf:      { name:'น่อง',          pct:49.5, level:'ต่ำ', color:'#c88c0a', none:50.3, mild:35.3, mod:10.8, high:3.6,  max:0.0 },
+};
+const bmRankOrder = ['shoulder','neck','lowerback','upperback','wrist','forearm','hip','foot','knee','calf'];
+
+function bmMakeBar(label, pct, color) {
+  return `<div style="font-size:11px; margin-bottom:5px;">
+    <div style="display:flex; justify-content:space-between; margin-bottom:2px;"><span style="color:#475569">${label}</span><span style="font-weight:700; color:#1e293b">${pct}%</span></div>
+    <div class="bm-bar-wrap"><div class="bm-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+  </div>`;
+}
+
+function initBodyMap() {
+  // Build ranked list
+  const rankEl = document.getElementById('bmRankList');
+  if (rankEl) {
+    rankEl.innerHTML = bmRankOrder.map(id => {
+      const d = bmData[id];
+      const col = d.level === 'สูงมาก' ? '#dc3545' : d.level === 'สูง' ? '#fd7e14' : d.level === 'ปานกลาง' ? '#e4a000' : '#c88c0a';
+      return `<div class="bm-rank-row" style="cursor:pointer;" onclick="bmSelectPart('${id}')">
+        <div class="bm-rank-label">${d.name}</div>
+        <div class="bm-rank-bar-bg"><div class="bm-rank-bar-fill" style="width:${d.pct}%; background:${col};"></div></div>
+        <div class="bm-rank-pct" style="color:${col};">${d.pct}%</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Tooltip & click on SVG spots
+  const tooltip = document.getElementById('bmTooltip');
+  document.querySelectorAll('.bm-spot').forEach(el => {
+    const id = el.getAttribute('data-id');
+    const d = bmData[id];
+
+    el.addEventListener('mouseenter', function(e) {
+      if (tooltip && d) {
+        tooltip.innerHTML = `<strong>${d.name}</strong>: ${d.pct}% — ${d.level}`;
+        tooltip.style.display = 'block';
+      }
+    });
+    el.addEventListener('mousemove', function(e) {
+      if (tooltip) {
+        const rect = this.closest('div[style*="position:relative"]').getBoundingClientRect();
+        const svgEl = document.getElementById('bodyMap');
+        const svgRect = svgEl.getBoundingClientRect();
+        const x = e.clientX - svgRect.left + 10;
+        const y = e.clientY - svgRect.top - 32;
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      }
+    });
+    el.addEventListener('mouseleave', function() {
+      if (tooltip) tooltip.style.display = 'none';
+    });
+    el.addEventListener('click', function() {
+      bmSelectPart(id);
+    });
+  });
+}
+
+function bmSelectPart(id) {
+  const d = bmData[id];
+  if (!d) return;
+  // Deactivate all spots
+  document.querySelectorAll('.bm-spot').forEach(s => s.classList.remove('bm-active'));
+  document.querySelectorAll(`.bm-spot[data-id="${id}"]`).forEach(s => s.classList.add('bm-active'));
+  // Highlight rank row
+  document.querySelectorAll('#bmRankList .bm-rank-row').forEach(r => r.style.background = '');
+  const rows = document.querySelectorAll('#bmRankList .bm-rank-row');
+  const idx = bmRankOrder.indexOf(id);
+  if (rows[idx]) rows[idx].style.background = '#f1f5f9';
+
+  const lvlBg = d.level === 'สูงมาก' ? '#fee2e2' : d.level === 'สูง' ? '#ffedd5' : d.level === 'ปานกลาง' ? '#fef9c3' : '#f0fdf4';
+  const lvlText = d.level === 'สูงมาก' ? '#991b1b' : d.level === 'สูง' ? '#9a3412' : d.level === 'ปานกลาง' ? '#854d0e' : '#166534';
+  const lvlEmoji = d.level === 'สูงมาก' ? '🔴' : d.level === 'สูง' ? '🟠' : d.level === 'ปานกลาง' ? '🟡' : '🟤';
+
+  document.getElementById('bmDetail').innerHTML = `
+    <div style="font-size:15px; font-weight:700; color:#1e293b; margin-bottom:2px;">${d.name}</div>
+    <div style="font-size:30px; font-weight:800; color:${d.color}; line-height:1.1;">${d.pct}%</div>
+    <div style="display:inline-block; background:${lvlBg}; color:${lvlText}; font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px; margin:6px 0 12px;">${lvlEmoji} ระดับ${d.level}</div>
+    <div style="font-size:11px; font-weight:600; color:#475569; margin-bottom:7px;">การกระจายความรุนแรง (% ผู้ตอบ)</div>
+    ${bmMakeBar('ไม่มีอาการ', d.none, '#94a3b8')}
+    ${bmMakeBar('เล็กน้อย', d.mild, '#60a5fa')}
+    ${bmMakeBar('ปานกลาง', d.mod, '#fbbf24')}
+    ${bmMakeBar('มาก', d.high, '#f97316')}
+    ${bmMakeBar('มากเกินทน', d.max, '#dc3545')}
+  `;
+}
+
 // Init on load
-window.addEventListener('load', initCharts);
+window.addEventListener('load', function() { initCharts(); initBodyMap(); });
 </script>
 </body>
 </html>
